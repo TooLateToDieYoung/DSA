@@ -1,5 +1,5 @@
-#ifndef _SINGLELINKLIST_H_
-#define _SINGLELINKLIST_H_
+#ifndef _RECURSUVESINGLELINKEDLIST_H_
+#define _RECURSUVESINGLELINKEDLIST_H_
 
 #include <cstddef>
 #include <iostream>
@@ -9,29 +9,30 @@
 
 // ? Main class delcaration
 template <class T>
-class SingleLinkList 
+class RecursiveSingleLinkedList 
 {
   private: // ! Make it private to not be visible outside
     class Node; // ? Forward declaration on subclass to serve the class
 
   public: // ? Constructor & Destructor
-    SingleLinkList(void) : first{nullptr} { }
-    virtual ~SingleLinkList(void);
+    RecursiveSingleLinkedList(void) : first{nullptr} { }
+    virtual ~RecursiveSingleLinkedList(void);
 
   public: // ? func
-    SingleLinkList * const PrintList(void);
-    SingleLinkList * const Insert(T data, std::size_t seat = 0);
-    SingleLinkList * const Remove(std::size_t seat);
-    SingleLinkList * const Reverse(void);
-    SingleLinkList * const Replace(T data, std::size_t seat);
+    RecursiveSingleLinkedList * const PrintList(void);
+    RecursiveSingleLinkedList * const Insert(T data, std::size_t seat = 0);
+    RecursiveSingleLinkedList * const Remove(std::size_t seat);
+    RecursiveSingleLinkedList * const Reverse(void);
+    RecursiveSingleLinkedList * const Replace(T data, std::size_t seat);
+    std::size_t Length(void) const;
 
   private: // ? var
-    Node * first  {nullptr};
+    Node * first {nullptr};
 };
 
 // ? Subclass entity declaration
 template <class T>
-class SingleLinkList<T>::Node
+class RecursiveSingleLinkedList<T>::Node
 {
   public: // ? Constructor & Destructor
     Node(T data);                    // ? Serve to main class
@@ -47,7 +48,7 @@ class SingleLinkList<T>::Node
 
 // ? Main class implementation
 template <class T>
-SingleLinkList<T>::~SingleLinkList(void)
+RecursiveSingleLinkedList<T>::~RecursiveSingleLinkedList(void)
 {
   std::cout << "**************************************************************" << std::endl;
 
@@ -60,7 +61,7 @@ SingleLinkList<T>::~SingleLinkList(void)
 }
 
 template <class T>
-SingleLinkList<T> * const SingleLinkList<T>::PrintList(void)
+RecursiveSingleLinkedList<T> * const RecursiveSingleLinkedList<T>::PrintList(void)
 {
   std::cout << "--------------------------------------------------------------" << std::endl;
 
@@ -70,13 +71,13 @@ SingleLinkList<T> * const SingleLinkList<T>::PrintList(void)
     curr = curr->next;
   }
 
-  std::cout << "--------------------------------------------------------------" << std::endl;
+  std::cout << "-------------------------------------------------| Length : " << Length() << std::endl;
 
   return this;
 }
 
 template <class T>
-SingleLinkList<T> * const SingleLinkList<T>::Insert(T data, std::size_t seat)
+RecursiveSingleLinkedList<T> * const RecursiveSingleLinkedList<T>::Insert(T data, std::size_t seat)
 {
   Node * const node = new Node { data } ;
 
@@ -108,14 +109,14 @@ SingleLinkList<T> * const SingleLinkList<T>::Insert(T data, std::size_t seat)
 }
 
 template <class T>
-SingleLinkList<T> * const SingleLinkList<T>::Remove(std::size_t seat)
+RecursiveSingleLinkedList<T> * const RecursiveSingleLinkedList<T>::Remove(std::size_t seat)
 {
   // ? If is empty list
   if( this->first == nullptr ) return this;
 
   // ? If first seat is selected
   if( seat == 0 ) {
-    Node * temp = this->first;
+    Node * const temp = this->first;
     this->first = temp->next;
     delete temp;
     return this;
@@ -133,14 +134,14 @@ SingleLinkList<T> * const SingleLinkList<T>::Remove(std::size_t seat)
 
   if( front == nullptr || front->next == nullptr ) return this; // check if it works
 
-  Node * temp = front->next;
+  Node * const temp = front->next;
   front->next = temp->next;
   delete temp;
   return this;
 }
 
 template <class T>
-SingleLinkList<T> * const SingleLinkList<T>::Reverse(void)
+RecursiveSingleLinkedList<T> * const RecursiveSingleLinkedList<T>::Reverse(void)
 {
   // ? Recursively reverse
   auto turnAround = [&](auto&& lambda, Node * const front, Node * const curr) {
@@ -157,7 +158,7 @@ SingleLinkList<T> * const SingleLinkList<T>::Reverse(void)
 }
 
 template <class T>
-SingleLinkList<T> * const SingleLinkList<T>::Replace(T data, std::size_t seat)
+RecursiveSingleLinkedList<T> * const RecursiveSingleLinkedList<T>::Replace(T data, std::size_t seat)
 {
   auto findTarget = [&](auto&& lambda, Node * const curr, std::size_t offset) {
     if( curr == nullptr ) return curr;
@@ -172,8 +173,19 @@ SingleLinkList<T> * const SingleLinkList<T>::Replace(T data, std::size_t seat)
   return this;
 }
 
+template <class T>
+std::size_t RecursiveSingleLinkedList<T>::Length(void) const
+{
+  auto computeLength = [&](auto&& lambda, Node * const curr, std::size_t counter) {
+    if( curr == nullptr ) return counter;
+    return lambda(lambda, curr->next, counter + 1);
+  };
+
+  return computeLength(computeLength, this->first, 0);
+}
+
 // ? Subclass implementation
 template <class T>
-SingleLinkList<T>::Node::Node(T data) : data{data}, next{nullptr} { }
+RecursiveSingleLinkedList<T>::Node::Node(T data) : data{data}, next{nullptr} { }
 
-#endif // _SINGLELINKLIST_H_
+#endif // _RECURSUVESINGLELINKEDLIST_H_
