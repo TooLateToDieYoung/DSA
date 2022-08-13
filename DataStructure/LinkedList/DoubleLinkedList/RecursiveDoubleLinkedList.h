@@ -27,8 +27,8 @@ class RecursiveDoubleLinkedList
     std::size_t Length(void) const;
 
   private: // ? func
-    Node * const FindNodeFromHead(Node * curr, std::size_t offset, const std::size_t& seat);
-    Node * const FindNodeFromTail(Node * curr, std::size_t offset, const std::size_t& seat);
+    Node * const FindNodeFromHead(Node * curr, std::size_t offset, const std::size_t& seat) const;
+    Node * const FindNodeFromTail(Node * curr, std::size_t offset, const std::size_t& seat) const;
 
   private: // ? var
     Node * head {nullptr};
@@ -238,13 +238,13 @@ std::size_t RecursiveDoubleLinkedList<T>::Length(void) const
 }
 
 template <class T>
-RecursiveDoubleLinkedList<T>::Node * const RecursiveDoubleLinkedList<T>::FindNodeFromHead(Node * curr, std::size_t offset, const std::size_t& seat)
+RecursiveDoubleLinkedList<T>::Node * const RecursiveDoubleLinkedList<T>::FindNodeFromHead(Node * curr, std::size_t offset, const std::size_t& seat) const
 {
   return ( offset == seat ) ? ( curr ) : FindNodeFromHead(curr->rear, offset + 1, seat) ;
 }
 
 template <class T>
-RecursiveDoubleLinkedList<T>::Node * const RecursiveDoubleLinkedList<T>::FindNodeFromTail(Node * curr, std::size_t offset, const std::size_t& seat)
+RecursiveDoubleLinkedList<T>::Node * const RecursiveDoubleLinkedList<T>::FindNodeFromTail(Node * curr, std::size_t offset, const std::size_t& seat) const
 {
   return ( offset == seat ) ? ( curr ) : FindNodeFromTail(curr->prev, offset - 1, seat) ;
 }

@@ -20,10 +20,10 @@ int main(void)
   list->Reverse()->PrintList(); // 0 6 1 2 8 3 9
   list->Reverse()->PrintList(); // 9 3 8 2 1 6 0
 
-  list->Replace('a', 0); // a 3 8 2 1 6 0
-  list->Replace('b', 3); // a 3 8 b 1 6 0
-  list->Replace('c', 6); // a 3 8 b 1 6 c
-  list->Replace('d', 9); // a 3 8 b 1 6 c -> nothing ( out of length )
+  list->Replace('a', 0)->PrintList(); // a 3 8 2 1 6 0
+  list->Replace('b', 3)->PrintList(); // a 3 8 b 1 6 0
+  list->Replace('c', 6)->PrintList(); // a 3 8 b 1 6 c
+  list->Replace('d', 9)->PrintList(); // a 3 8 b 1 6 c -> nothing ( out of length )
 
   delete list; // a 3 8 b 1 6 c
 

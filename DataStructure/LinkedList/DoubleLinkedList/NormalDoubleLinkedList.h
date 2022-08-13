@@ -26,6 +26,10 @@ class NormalDoubleLinkedList
     NormalDoubleLinkedList * const Replace(T data, std::size_t seat);
     std::size_t Length(void) const;
 
+  private: // ? func
+    Node * const FindNodeFromHead(const std::size_t& seat) const;
+    Node * const FindNodeFromTail(const std::size_t& seat) const;
+
   private: // ? var
     Node * head {nullptr};
     Node * tail {nullptr};
@@ -40,7 +44,7 @@ class NormalDoubleLinkedList<T>::Node
     Node(void) = delete;
     Node(const Node& copy) = delete;
     Node(Node&& move) = delete;
-    ~Node(void) = default;
+    ~Node(void);
   
   public:
     T      data {0};
@@ -95,7 +99,8 @@ NormalDoubleLinkedList<T> * const NormalDoubleLinkedList<T>::PrintList(void)
 template <class T>
 NormalDoubleLinkedList<T> * const NormalDoubleLinkedList<T>::Insert(T data, std::size_t seat)
 {
-  Node * const node { new Node { data } } ;
+  const std::size_t length { Length() } ;
+  Node * const      node   { new Node { data } } ;
 
   if( this->head == nullptr ) {
     this->head = node;
@@ -109,8 +114,6 @@ NormalDoubleLinkedList<T> * const NormalDoubleLinkedList<T>::Insert(T data, std:
     this->head       = node;
     return this;
   }
-
-  std::size_t length { Length() } ;
 
   if( seat >= length ) {
     node->prev       = this->tail;
@@ -251,8 +254,27 @@ std::size_t NormalDoubleLinkedList<T>::Length(void) const
   return counter;
 }
 
+template <class T>
+NormalDoubleLinkedList<T>::Node * const NormalDoubleLinkedList<T>::FindNodeFromHead(const std::size_t& seat) const
+{
+  Node * curr { this->head } ;
+  for(std::size_t offset { 0 }; offset != seat; ++offset) curr = curr->rear;
+  return curr;
+}
+
+template <class T>
+NormalDoubleLinkedList<T>::Node * const NormalDoubleLinkedList<T>::FindNodeFromTail(const std::size_t& seat) const
+{
+  Node * curr { this->tail } ;
+  for(std::size_t offset { Length() - 1 }; offset != seat; --offset) curr = curr->prev;
+  return curr;
+}
+
 // ? Subclass implementation
 template <class T>
 NormalDoubleLinkedList<T>::Node::Node(T data) : data{data}, prev{nullptr}, rear{nullptr} { }
+
+template <class T>
+NormalDoubleLinkedList<T>::Node::~Node(void) { }
 
 #endif // _NORMALDOUBLELINKEDLIST_H_
