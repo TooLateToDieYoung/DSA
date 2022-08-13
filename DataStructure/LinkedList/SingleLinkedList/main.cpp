@@ -1,10 +1,10 @@
-#include <iostream>
 #include "NormalSingleLinkedList.h"
 #include "RecursiveSingleLinkedList.h"
 
 int main(void)
 {
   NormalSingleLinkedList<char> * list { new NormalSingleLinkedList<char> { } } ;
+  // RecursiveSingleLinkedList<char> * list { new RecursiveSingleLinkedList<char> { } } ;
 
   // 0 -> 1 0 -> 2 1 0 -> 3 2 1 0 -> 4 3 2 1 0
   for(char c { 0 }; c < 5; ++c) list->Insert(c + 0x30)->PrintList();

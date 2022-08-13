@@ -26,6 +26,9 @@ class RecursiveSingleLinkedList
     RecursiveSingleLinkedList * const Replace(T data, std::size_t seat);
     std::size_t Length(void) const;
 
+  private: // ? func
+    Node * const FindTargetPreviousNode(Node * const curr, std::size_t offset, const std::size_t& seat);
+
   private: // ? var
     Node * first {nullptr};
 };
@@ -43,7 +46,7 @@ class RecursiveSingleLinkedList<T>::Node
 
   public: // ? var
     T      data {'\0'};
-    Node * next {nullptr};
+    Node * rear {nullptr};
 };
 
 // ? Main class implementation
@@ -53,7 +56,7 @@ RecursiveSingleLinkedList<T>::~RecursiveSingleLinkedList(void)
   std::cout << "**************************************************************" << std::endl;
 
   while( this->first ) {
-    std::cout << "Address: " << this->first << ", Data: " << this->first->data << ", Next: " << this->first->next << std::endl;
+    std::cout << "Address: " << this->first << ", Data: " << this->first->data << ", Next: " << this->first->rear << std::endl;
     Remove(0);
   }
 
@@ -67,8 +70,8 @@ RecursiveSingleLinkedList<T> * const RecursiveSingleLinkedList<T>::PrintList(voi
 
   Node * curr { this->first };
   while( curr != nullptr ) {
-    std::cout << "Address: " << curr << ", Data: " << curr->data << ", Next: " << curr->next << std::endl;
-    curr = curr->next;
+    std::cout << "Address: " << curr << ", Data: " << curr->data << ", Next: " << curr->rear << std::endl;
+    curr = curr->rear;
   }
 
   std::cout << "-------------------------------------------------| Length : " << Length() << std::endl;
@@ -89,22 +92,21 @@ RecursiveSingleLinkedList<T> * const RecursiveSingleLinkedList<T>::Insert(T data
   
   // ? If first seat is selected
   if( seat == 0 ) {
-    node->next = this->first;
+    node->rear = this->first;
     this->first = node;
     return this;
   }
 
-  // ? Recursively find the node before the inserted node
-  auto findFront = [&](auto&& lambda, Node * const curr, std::size_t offset) {
-    if( curr->next == nullptr ) return curr; // It is end of list
-    if( offset == 0           ) return curr; // Found it
-    return lambda(lambda, curr->next, offset - 1); // Recursive
-  };
+  const std::size_t length { Length() } ;
 
-  Node * const front { findFront(findFront, this->first, seat - 1) } ;
-
-  node->next = front->next;
-  front->next = node;
+  Node * const prev { 
+    ( seat < length ) ?
+    FindTargetPreviousNode(this->first, 0, seat  ) :
+    FindTargetPreviousNode(this->first, 0, length) 
+  } ;
+                           // p -> r, n
+  node->rear = prev->rear; // p -> r, n -> r
+  prev->rear = node;       // p -> n -> r
   return this;
 }
 
@@ -116,27 +118,21 @@ RecursiveSingleLinkedList<T> * const RecursiveSingleLinkedList<T>::Remove(std::s
 
   // ? If first seat is selected
   if( seat == 0 ) {
-    Node * const temp = this->first;
-    this->first = temp->next;
-    delete temp;
+    Node * const curr { this->first } ;
+    this->first = this->first->rear;
+    delete curr;
     return this;
   } 
 
-  // ? Recursively find the node before the deleted node
-  auto findFront = [&](auto&& lambda, Node * const curr, std::size_t offset) {
-    if( curr == nullptr ) return curr; // Haven't found
-    if( offset == 0     ) return curr; // Found it
-    return lambda(lambda, curr->next, offset - 1); // Recursive
-  };
+  const std::size_t length { Length() } ;
+
+  if( seat >= length ) return this;
 
   // ? Recursively find the node before the deleted node
-  Node * const front { findFront(findFront, this->first, seat - 1) } ;
-
-  if( front == nullptr || front->next == nullptr ) return this; // check if it works
-
-  Node * const temp = front->next;
-  front->next = temp->next;
-  delete temp;
+  Node * const prev { FindTargetPreviousNode(this->first, 0, seat) } ;
+  Node * const curr { prev->rear } ;
+  prev->rear = prev->rear->rear;
+  delete curr;
   return this;
 }
 
@@ -144,11 +140,11 @@ template <class T>
 RecursiveSingleLinkedList<T> * const RecursiveSingleLinkedList<T>::Reverse(void)
 {
   // ? Recursively reverse
-  auto turnAround = [&](auto&& lambda, Node * const front, Node * const curr) {
-    if( curr == nullptr ) return front;
+  auto turnAround = [&](auto&& lambda, Node * const prev, Node * const curr) {
+    if( curr == nullptr ) return prev;
 
-    Node * const rear = curr->next;
-    curr->next = front;
+    Node * const rear = curr->rear;
+    curr->rear = prev;
     return lambda(lambda, curr, rear);
   };
 
@@ -160,15 +156,19 @@ RecursiveSingleLinkedList<T> * const RecursiveSingleLinkedList<T>::Reverse(void)
 template <class T>
 RecursiveSingleLinkedList<T> * const RecursiveSingleLinkedList<T>::Replace(T data, std::size_t seat)
 {
-  auto findTarget = [&](auto&& lambda, Node * const curr, std::size_t offset) {
-    if( curr == nullptr ) return curr;
-    if( offset == 0     ) return curr;
-    return lambda(lambda, curr->next, offset - 1);
-  };
+  if( this->first == nullptr ) return this;
 
-  Node * const target { findTarget(findTarget, this->first, seat) } ;
+  if( seat == 0 ) {
+    this->first->data = data;
+    return this;
+  }
 
-  if( target != nullptr ) target->data = data;
+  const std::size_t length { Length() } ;
+
+  if( seat >= length ) return this;
+
+  // ? Recursively find the node before the deleted node
+  FindTargetPreviousNode(this->first, 0, seat)->rear->data = data;
 
   return this;
 }
@@ -178,14 +178,20 @@ std::size_t RecursiveSingleLinkedList<T>::Length(void) const
 {
   auto computeLength = [&](auto&& lambda, Node * const curr, std::size_t counter) {
     if( curr == nullptr ) return counter;
-    return lambda(lambda, curr->next, counter + 1);
+    return lambda(lambda, curr->rear, counter + 1);
   };
 
   return computeLength(computeLength, this->first, 0);
 }
 
+template <class T>
+RecursiveSingleLinkedList<T>::Node * const RecursiveSingleLinkedList<T>::FindTargetPreviousNode(Node * const curr, std::size_t offset, const std::size_t& seat)
+{
+  return ( offset == seat - 1 ) ? ( curr ) : FindTargetPreviousNode(curr->rear, offset + 1, seat) ;
+}
+
 // ? Subclass implementation
 template <class T>
-RecursiveSingleLinkedList<T>::Node::Node(T data) : data{data}, next{nullptr} { }
+RecursiveSingleLinkedList<T>::Node::Node(T data) : data{data}, rear{nullptr} { }
 
 #endif // _RECURSUVESINGLELINKEDLIST_H_
