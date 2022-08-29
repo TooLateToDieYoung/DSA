@@ -1,68 +1,62 @@
-#ifndef _BST_H_
-#define _BST_H_
+#ifndef _AVL_H_
+#define _AVL_H_
 
 #include <iostream>
 
 template<class T>
-class BST
+class AVL
 {
-  public:
-    typedef enum { Preorder, Inorder, Postorder, Levelorder } TraversalTypeDef;
-
   private:
     class Node;
 
-  private:
-    Node * root;
-
   public:
-    explicit BST(void) : root{nullptr} {}
-    virtual ~BST(void);
+    explicit AVL(void) : root{nullptr} {}
+    virtual ~AVL(void);
   
   public:
-    BST * Insert(T data);
-    BST * Delete(T data);
-    template<TraversalTypeDef type> BST * PrintTree(void);
-
     std::size_t Height(void) const { return this->root->Height(); }
     std::size_t Size(void) const { return this->root->Size(); }
+    void        PrintLevelorder(void) const;
+    AVL * const Insert(T data);
+    AVL * const Delete(T data);
 
   private:
-    void PrintPreorder(const Node * const curr) const;
-    void PrintInorder(const Node * const curr) const;
-    void PrintPostorder(const Node * const curr) const;
-    void PrintLevelorder(const Node * const curr) const;
+    Node * root;
 };
 
 template<class T>
-class BST<T>::Node
+class AVL<T>::Node
 {
   public:
-    explicit Node(T data) : data{data}, L{nullptr}, R{nullptr} { }
+    explicit Node(T data) : data{data}, L{nullptr}, R{nullptr} {}
     ~Node(void) = default;
 
   public:
-    std::size_t Height(void) const;
-    std::size_t Size(void) const;
+    bool         isLeaf(void) const;
+    std::size_t  Height(void) const;
+    std::size_t  Size(void) const;
+    Node * const RotationL(void);
+    Node * const RotationR(void);
+    Node * const Rebalance(void);
 
   public:
-    T      data;
-    Node * L;
-    Node * R;
+    T           data   { };
+    Node *      L      { nullptr };
+    Node *      R      { nullptr };
 };
 
 template<class T>
-BST<T>::~BST(void) 
+AVL<T>::~AVL(void) 
 {
-  std::cout << "~BST() -----------------------------------------------------" << std::endl;
+  std::cout << "~AVL() -----------------------------------------------------" << std::endl;
   while( this->root != nullptr ) {
     Delete(this->root->data);
-    PrintLevelorder(this->root);
+    PrintLevelorder();
   }
 }
 
 template<class T>
-BST<T> * BST<T>::Insert(T data)
+AVL<T> * const AVL<T>::Insert(T data)
 {
   auto FindPrev = [&](auto&& lambda, Node * const curr) {
     if( curr == nullptr   ) return curr; // ? Only happens when this->root is nullptr
@@ -73,15 +67,17 @@ BST<T> * BST<T>::Insert(T data)
 
   Node * const prev { FindPrev(FindPrev, this->root) } ;
 
-  if     ( prev == nullptr   ) this->root = new Node { data } ;
-  else if( prev->data > data ) prev->L    = new Node { data } ;
-  else if( prev->data < data ) prev->R    = new Node { data } ;
+  if     ( prev == nullptr   ) this->root = new Node { data };
+  else if( prev->data > data ) prev->L    = new Node { data };
+  else if( prev->data < data ) prev->R    = new Node { data };
+
+  this->root = this->root->Rebalance();
 
   return this;
 }
 
 template<class T>
-BST<T> * BST<T>::Delete(T data)
+AVL<T> * const AVL<T>::Delete(T data)
 {
   if( this->root == nullptr ) return this;
 
@@ -99,7 +95,7 @@ BST<T> * BST<T>::Delete(T data)
 
   // ? Sink node to be a leaf of tree
   rear = ( curr->L != nullptr ) ? ( curr->L ) : ( curr->R ) ;
-  while( curr->L != nullptr || curr->R != nullptr ) {
+  while( !curr->isLeaf() ) {
     curr->data = rear->data;
     prev = curr;
     curr = rear;
@@ -112,57 +108,13 @@ BST<T> * BST<T>::Delete(T data)
 
   delete curr;
 
-  return this;
-}
-
-template<class T>
-template<BST<T>::TraversalTypeDef type>
-BST<T> * BST<T>::PrintTree(void)
-{
-  std::cout << "Print() ----------------------------------------------------" << std::endl;
-  std::cout << "Size: " << Size() << ", Height: " << Height() << std::endl;
-  switch ( type ) 
-  {
-    case Preorder:   { PrintPreorder(this->root);   break; }
-    case Inorder:    { PrintInorder(this->root);    break; }
-    case Postorder:  { PrintPostorder(this->root);  break; }
-    case Levelorder: { PrintLevelorder(this->root); break; }
-    default: break;
-  }
-  std::cout << "------------------------------------------------------------" << std::endl;
+  if( this->root != nullptr ) this->root = this->root->Rebalance();
 
   return this;
 }
 
 template<class T>
-void BST<T>::PrintPreorder(const Node * const curr) const
-{
-  if( curr == nullptr ) return;
-  std::cout << "Address: " << curr << ", Data: " << curr->data << std::endl;
-  PrintPreorder(curr->L);
-  PrintPreorder(curr->R);
-}
-
-template<class T>
-void BST<T>::PrintInorder(const Node * const curr) const
-{
-  if( curr == nullptr ) return;
-  PrintInorder(curr->L);
-  std::cout << "Address: " << curr << ", Data: " << curr->data << std::endl;
-  PrintInorder(curr->R);
-}
-
-template<class T>
-void BST<T>::PrintPostorder(const Node * const curr) const
-{
-  if( curr == nullptr ) return;
-  PrintPostorder(curr->L);
-  PrintPostorder(curr->R);
-  std::cout << "Address: " << curr << ", Data: " << curr->data << std::endl;
-}
-
-template<class T>
-void BST<T>::PrintLevelorder(const Node * const curr) const
+void AVL<T>::PrintLevelorder(void) const
 {
   // ? Count size of curr node ( need to contain null place )
   auto CountSize = [&](auto&& lambda, const Node * const curr, const std::size_t size) {
@@ -172,7 +124,7 @@ void BST<T>::PrintLevelorder(const Node * const curr) const
     return ( sizeL > sizeR ) ? ( sizeL ) : ( sizeR ) ; // ? compare which side is bigger
   };
 
-  const std::size_t size { CountSize(CountSize, curr, 1) + 1 } ;
+  const std::size_t size { CountSize(CountSize, this->root, 1) + 1 } ;
 
   T * arr { new T[size] {} } ; // ? Convert BST into array form
 
@@ -183,11 +135,11 @@ void BST<T>::PrintLevelorder(const Node * const curr) const
     lambda(lambda, curr->R, index * 2 + 1);
   };
 
-  ConvertToArray(ConvertToArray, curr, 1);
+  ConvertToArray(ConvertToArray, this->root, 1);
 
   // ? Print datas
   std::size_t module {2};
-  std::cout << "Data: [" ;
+  std::cout << "Height: " << Height() << ", Size: " << Size() << ", Data: [" ;
   for(std::size_t index {1}; index < size; ++index) {
     if( index % module == 0 ) { module *= 2;
       std::cout << "], [" ;
@@ -198,11 +150,18 @@ void BST<T>::PrintLevelorder(const Node * const curr) const
   }
   std::cout << "]" << std::endl;
   
-  delete[] arr; 
+  delete[] arr;
+}
+
+// ? class AVL<T>::Node impelement
+template<class T>
+bool AVL<T>::Node::isLeaf(void) const 
+{
+  return ( this->L == nullptr && this->R == nullptr ) ;
 }
 
 template<class T>
-std::size_t BST<T>::Node::Height(void) const
+std::size_t AVL<T>::Node::Height(void) const
 {
   auto RecursiveHeight = [&](auto&& lambda, const Node * const curr, const std::size_t deep) {
     if( curr == nullptr ) return deep;
@@ -214,7 +173,7 @@ std::size_t BST<T>::Node::Height(void) const
 }
 
 template<class T>
-std::size_t BST<T>::Node::Size(void) const
+std::size_t AVL<T>::Node::Size(void) const
 {
   auto RecursiveSize = [&](auto&& lambda, const Node * const curr) {
     if( curr == nullptr ) return 1;
@@ -223,4 +182,47 @@ std::size_t BST<T>::Node::Size(void) const
   return RecursiveSize(RecursiveSize, this) - 1;
 }
 
-#endif // _BST_H_
+template<class T>
+AVL<T>::Node * const AVL<T>::Node::RotationL(void)
+{
+  Node * const temp { this->R } ;
+  this->R = temp->L;
+  temp->L = this;
+  return temp;
+}
+
+template<class T>
+AVL<T>::Node * const AVL<T>::Node::RotationR(void)
+{
+  Node * const temp { this->L } ;
+  this->L = temp->R;
+  temp->R = this;
+  return temp;
+}
+
+template<class T>
+AVL<T>::Node * const AVL<T>::Node::Rebalance(void)
+{
+  if( this->Height() > 3 ) {
+    if( this->L != nullptr ) this->L = this->L->Rebalance();
+    if( this->R != nullptr ) this->R = this->R->Rebalance();
+  }
+
+  const std::size_t heightL { ( this->L != nullptr ) ? ( this->L->Height() ) : ( 0 ) } ;
+  const std::size_t heightR { ( this->R != nullptr ) ? ( this->R->Height() ) : ( 0 ) } ;
+  const short factor { static_cast<const short>( heightL - heightR ) } ; 
+  
+  switch ( factor ) {
+    case +2: {
+      if( this->L->R != nullptr ) this->L = this->L->RotationL();
+      return this->RotationR();
+    }
+    case -2: {
+      if( this->R->L != nullptr ) this->R = this->R->RotationR();
+      return this->RotationL();
+    }
+    default: return this;
+  }
+}
+
+#endif // _AVL_H_
